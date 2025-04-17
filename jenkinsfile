@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        COMPOSE_FILE = 'docker-compose.yml'
+    }
+
+    stages {
+        stage('📥 Checkout') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/Yutux/TouchSomeGrass-Docker.git',
+                        credentialsId: 'github-token'
+                    ]]
+                ])
+            }
+        }
+
+        stage('🧱 Build Docker Images') {
+            steps {
+                sh 'docker-compose build'
+            }
+        }
+
+        stage('🐳 Launch Services') {
+            steps {
+                sh 'docker-compose up -d'
+            }
+        }
+
+        stage('🔍 Check Running Containers') {
+            steps {
+                sh 'docker ps'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Tous les services sont déployés avec succès.'
+        }
+        failure {
+            echo '❌ Échec du pipeline.'
+        }
+    }
+}
