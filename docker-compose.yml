@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  mysql-db:
+  mysql-container:
     image: mysql:5.7
     container_name: mysql-container
     environment:
@@ -12,7 +12,7 @@ services:
     networks:
       - app-network
 
-  directory-service:
+  eureka-server:
     build:
       context: ./DirectoryService
     container_name: eureka-server
@@ -32,8 +32,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - mysql-container
-      - eureka-server
+      - mysql-container          # corrigé ici
+      - eureka-server # corrigé ici
     networks:
       - app-network
 
@@ -46,7 +46,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - eureka-server
+      - eureka-server # corrigé ici
     networks:
       - app-network
 
