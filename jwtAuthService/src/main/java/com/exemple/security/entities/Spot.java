@@ -1,10 +1,14 @@
 package com.exemple.security.entities;
 
 import java.io.Serializable;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -28,10 +32,22 @@ public class Spot implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
+    
+    @Column(columnDefinition = "TEXT")
     private String imagePath;
+    
     private double latitude;
     private double longitude;
     private String description;
+    
+ // ✅ Plusieurs URLs d'images (Google Maps ou upload)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "spot_image_urls",
+        joinColumns = @JoinColumn(name = "spot_id")
+    )
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private List<String> imageUrls;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "creator_id", nullable = false)

@@ -27,26 +27,42 @@ public class SpotController {
 	private SpotServiceConnector spotService;
 	
 	// Créer un spot
-    @PostMapping(value = "/create", consumes = "multipart/form-data")
-    public ResponseEntity<SpotResponseDto> createSpot(@RequestPart("spot") SpotRequestDto spotRequestDto, @RequestPart("file") MultipartFile file) {
-        return spotService.createSpot(spotRequestDto, file);
-    }
-
-    // Récupérer un spot par ID
-    @GetMapping("/get/{id}")
-    public ResponseEntity<SpotResponseDto> getSpot(@PathVariable int id) {
+	@PostMapping(value = "/create", consumes = "multipart/form-data")
+	public ResponseEntity<SpotResponseDto> createSpot(
+	        @RequestPart("spot") SpotRequestDto spotRequestDto,
+	        @RequestPart(value = "files", required = false) MultipartFile[] files) {
+	    return spotService.createSpot(spotRequestDto, files);
+	}
+	
+	@GetMapping("/get/{id}")
+    public ResponseEntity<?> getSpot(@PathVariable int id) {
         return spotService.getSpot(id);
     }
 
-    // Récupérer tous les spots
+    // ================================
+    // 🔹 GET ALL SPOTS
+    // ================================
     @GetMapping("/get/all")
-    public ResponseEntity<SpotsListResponseDto> getAllSpots() {
+    public ResponseEntity<?> getAllSpots() {
         return spotService.getAllSpots();
     }
 
-    // Supprimer un spot par ID
+    // ================================
+    // 🔹 UPDATE SPOT
+    // ================================
+    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<?> updateSpot(
+            @PathVariable int id,
+            @RequestPart("spot") SpotRequestDto spotRequestDto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+        return spotService.updateSpot(id, spotRequestDto, files);
+    }
+
+    // ================================
+    // 🔹 DELETE SPOT
+    // ================================
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<SpotResponseDto> deleteSpot(@PathVariable int id) {
+    public ResponseEntity<?> deleteSpot(@PathVariable int id) {
         return spotService.deleteSpot(id);
     }
 }

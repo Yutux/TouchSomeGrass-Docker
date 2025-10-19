@@ -38,4 +38,13 @@ public class FileStorageService {
 
         return fileName; // 🔥 Retourner le chemin du fichier
     }
+    
+    public void deleteFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        if (Files.exists(path)) {
+            Files.delete(path);
+        } else {
+            throw new IOException("Fichier introuvable : " + filePath);
+        }
+    }
 }

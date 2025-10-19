@@ -1,19 +1,19 @@
 package com.exemple.security.entities;
 
 import java.io.Serializable;
-
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "creator"})
 @Table(name = "hiking_spots")
 public class HikingSpot implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -21,16 +21,35 @@ public class HikingSpot implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String name;
+
+    private String name; // Nom du parcours (ex: "Circuit de la forêt")
     private String description;
     private String region;
-    private double distance;
-    private String imagePath;
+    private double distance; // Distance totale (en km)
+    private double duration; // Durée totale (en minutes)
+    private String travelMode; // WALKING, DRIVING, etc.
+
+    // 🗺️ Coordonnées du point de départ et d’arrivée
     private double startLatitude;
     private double startLongitude;
     private double endLatitude;
     private double endLongitude;
-    private int difficultyLevel;
+
+    private int difficultyLevel; // 1-5
+    private String imagePath; // Image principale
+
+    // ✅ Plusieurs URLs d’images
+    @ElementCollection
+    @CollectionTable(
+        name = "hiking_spot_images",
+        joinColumns = @JoinColumn(name = "hiking_spot_id")
+    )
+    @Column(name = "image_url")
+    private List<String> imageUrls;
+
+    // ✅ Liste des escales (waypoints)
+    @OneToMany(mappedBy = "hikingSpot", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HikingWaypoint> waypoints;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "creator_id", nullable = false)

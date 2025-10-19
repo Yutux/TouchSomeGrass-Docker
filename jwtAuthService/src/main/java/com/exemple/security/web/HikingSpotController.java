@@ -25,27 +25,49 @@ import lombok.RequiredArgsConstructor;
 public class HikingSpotController {
 
 	
-	 @Autowired
+	@Autowired
 	 private HikingSpotServiceConnector hikingSpotServiceConnector;
 
 	 @PostMapping(value = "/create", consumes = "multipart/form-data")
-	 public ResponseEntity<?> createHikingSpot(@RequestPart("hikingSpot") HikingSpotRequestDto req, @RequestPart("file") MultipartFile file) {
-		 return hikingSpotServiceConnector.createHikingSpot(req, file);
+	 public ResponseEntity<?> createHikingSpot(
+	         @RequestPart("spot") HikingSpotRequestDto hikingSpotRequestDto,
+	         @RequestPart(value = "files", required = false) MultipartFile[] files) {
+	     return hikingSpotServiceConnector.createHikingSpot(hikingSpotRequestDto, files);
 	 }
 
-	 @GetMapping("/get/{id}")
-	 public ResponseEntity<?> getHikingSpot(@PathVariable int id) {
-	     return hikingSpotServiceConnector.getHikingSpot(id);
-	 }
+	    // ================================
+	    // 🔹 GET HIKING SPOT BY ID
+	    // ================================
+	    @GetMapping("/get/{id}")
+	    public ResponseEntity<?> getHikingSpot(@PathVariable int id) {
+	        return hikingSpotServiceConnector.getHikingSpot(id);
+	    }
 
-	 @GetMapping("/all")
-	 public ResponseEntity<?> getAllHikingSpots() {
-		 return hikingSpotServiceConnector.getAllHikingSpots();
-	 }
-	 
-	 @DeleteMapping("/delete/{id}")
-	 public ResponseEntity<?> deleteHikingSpot(@PathVariable int id) {
-		 return hikingSpotServiceConnector.deleteHikingSpot(id);
-	 }
+	    // ================================
+	    // 🔹 GET ALL HIKING SPOTS
+	    // ================================
+	    @GetMapping("/get/all")
+	    public ResponseEntity<?> getAllHikingSpots() {
+	        return hikingSpotServiceConnector.getAllHikingSpots();
+	    }
+
+	    // ================================
+	    // 🔹 UPDATE HIKING SPOT
+	    // ================================
+	    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
+	    public ResponseEntity<?> updateHikingSpot(
+	            @PathVariable int id,
+	            @RequestPart("spot") HikingSpotRequestDto hikingSpotRequestDto,
+	            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+	        return hikingSpotServiceConnector.updateHikingSpot(id, hikingSpotRequestDto, files);
+	    }
+
+	    // ================================
+	    // 🔹 DELETE HIKING SPOT
+	    // ================================
+	    @DeleteMapping("/delete/{id}")
+	    public ResponseEntity<?> deleteHikingSpot(@PathVariable int id) {
+	        return hikingSpotServiceConnector.deleteHikingSpot(id);
+	    }
 	
 }

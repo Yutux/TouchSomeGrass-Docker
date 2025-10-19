@@ -1,9 +1,6 @@
 package com.exemple.security.dtos;
 
 import java.util.List;
-
-import com.exemple.security.entities.UserApp;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,12 +10,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SpotRequestDto {
-	private String name;
-    private String description;
+public class HikingWaypointDto {
+    private String name;
+    private String address;
+    private String placeId;
     private double latitude;
     private double longitude;
-    private String imagePath;  
-    private List<String> imageUrls;
-    private UserApp creator;
+    private Double rating;
+    private List<String> photos; // URLs Google Maps
 }
