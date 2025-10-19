@@ -1,10 +1,10 @@
-package com.alibou.security.user;
+package com.exemple.security.repositories;
 
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Integer> {
+import com.exemple.security.entities.UserApp;
 
-  Optional<User> findByEmail(String email);
-
+public interface UserRepository extends JpaRepository<UserApp, Integer> {
+	 Optional<UserApp> findByEmail(String email);
 }
