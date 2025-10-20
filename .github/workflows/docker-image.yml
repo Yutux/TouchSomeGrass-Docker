@@ -1,0 +1,66 @@
+name: CI - Build & Push Docker images
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write   # pour push vers GHCR
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}/touchsomegrass
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Construire chaque service (context = dossiers existants)
+      - name: Build & push eureka-server
+        uses: docker/build-push-action@v6
+        with:
+          context: ./DirectoryService
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/eureka-server:latest
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/eureka-server:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push auth-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./jwtAuthService
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/auth-service:latest
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push gateway-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./cloudGateway
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/gateway-service:latest
+            ghcr.io/${{ env.IMAGE_NAMESPACE }}/gateway-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
