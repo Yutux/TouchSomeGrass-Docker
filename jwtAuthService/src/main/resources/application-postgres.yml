@@ -37,3 +37,7 @@ eureka:
 logging:
   level:
     root: INFO
+
+file:
+  upload-dir: /tmp/uploads
+
