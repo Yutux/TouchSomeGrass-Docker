@@ -120,32 +120,35 @@ jobs:
       ##########################################################
       # 🔹 7️⃣ QUALITY GATE SonarCloud (Nouvelle action officielle)
       ##########################################################
+            ##########################################################
+      # ✅ QUALITY GATE DirectoryService
+      ##########################################################
       - name: SonarCloud Quality Gate - DirectoryService
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          scanMetadataReportFile: ./DirectoryService/.scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >
-            -Dsonar.projectKey=yutux_yutux-directoryservice
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
 
+      ##########################################################
+      # ✅ QUALITY GATE jwtAuthService
+      ##########################################################
       - name: SonarCloud Quality Gate - jwtAuthService
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          scanMetadataReportFile: ./jwtAuthService/.scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >
-            -Dsonar.projectKey=yutux_yutux-jwtauthservice
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
 
+      ##########################################################
+      # ✅ QUALITY GATE cloudGateway
+      ##########################################################
       - name: SonarCloud Quality Gate - cloudGateway
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          scanMetadataReportFile: ./cloudGateway/.scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >
-            -Dsonar.projectKey=yutux_yutux-cloudgateway
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
