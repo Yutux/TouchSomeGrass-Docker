@@ -38,42 +38,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      ##########################################################
-      # 1️⃣ Cloner le code
-      ##########################################################
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # nécessaire pour une analyse complète des diffs Git
+          fetch-depth: 0
 
-      ##########################################################
-      # 2️⃣ Installer Java & Maven
-      ##########################################################
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      ##########################################################
-      # 3️⃣ Cache Maven & Sonar
-      ##########################################################
-      - name: Cache SonarCloud packages
+      - name: Cache Maven & SonarCloud
         uses: actions/cache@v4
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache Maven dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          path: |
+            ~/.m2
+            ~/.sonar/cache
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-build
 
       ##########################################################
-      # 🔹 4️⃣ ANALYSE DU MODULE DirectoryService
+      # 🟦 DirectoryService
       ##########################################################
       - name: Analyze DirectoryService
         working-directory: ./DirectoryService
@@ -84,11 +70,18 @@ jobs:
             -Dsonar.projectKey=yutux_yutux-directoryservice \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
+      - name: Quality Gate - DirectoryService
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          scanMetadataReportFile: ./DirectoryService/.scannerwork/report-task.txt
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
       ##########################################################
-      # 🔹 5️⃣ ANALYSE DU MODULE jwtAuthService
+      # 🟩 jwtAuthService
       ##########################################################
       - name: Analyze jwtAuthService
         working-directory: ./jwtAuthService
@@ -99,11 +92,18 @@ jobs:
             -Dsonar.projectKey=yutux_yutux-jwtauthservice \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
+      - name: Quality Gate - jwtAuthService
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          scanMetadataReportFile: ./jwtAuthService/.scannerwork/report-task.txt
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
       ##########################################################
-      # 🔹 6️⃣ ANALYSE DU MODULE cloudGateway
+      # 🟨 cloudGateway
       ##########################################################
       - name: Analyze cloudGateway
         working-directory: ./cloudGateway
@@ -114,38 +114,9 @@ jobs:
             -Dsonar.projectKey=yutux_yutux-cloudgateway \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-      ##########################################################
-      # 🔹 7️⃣ QUALITY GATE SonarCloud (Nouvelle action officielle)
-      ##########################################################
-            ##########################################################
-      # ✅ QUALITY GATE DirectoryService
-      ##########################################################
-      - name: SonarCloud Quality Gate - DirectoryService
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        with:
-          scanMetadataReportFile: ./DirectoryService/.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-
-      ##########################################################
-      # ✅ QUALITY GATE jwtAuthService
-      ##########################################################
-      - name: SonarCloud Quality Gate - jwtAuthService
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        with:
-          scanMetadataReportFile: ./jwtAuthService/.scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-
-      ##########################################################
-      # ✅ QUALITY GATE cloudGateway
-      ##########################################################
-      - name: SonarCloud Quality Gate - cloudGateway
+      - name: Quality Gate - cloudGateway
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         with:
           scanMetadataReportFile: ./cloudGateway/.scannerwork/report-task.txt
