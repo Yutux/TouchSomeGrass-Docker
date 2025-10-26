@@ -14,12 +14,26 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
-
+    
   application:
     name: auth-service
 
 server:
-  port: ${PORT:8080}  # Render gère le port automatiquement
+  port: ${PORT:8080}  # Render utilise PORT (10000 en prod, 8080 en local)
+
+# Configuration Actuator pour Health Check
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: true
 
 eureka:
   client:
@@ -30,14 +44,16 @@ eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
     prefer-ip-address: false
-    non-secure-port: ${PORT:8080}
+    non-secure-port: 80  # ✅ Port EXTERNE (80 pour HTTP, Render redirige automatiquement)
     secure-port-enabled: false
+    health-check-url-path: /actuator/health
+    status-page-url-path: /actuator/info
     instance-id: ${spring.application.name}:${random.value}
 
 logging:
   level:
     root: INFO
+    com.netflix.discovery: DEBUG
 
 file:
   upload-dir: /tmp/uploads
-
