@@ -73,7 +73,6 @@ jobs:
   sonarqube-analysis:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && env.SONAR_HOST_URL != ''
     continue-on-error: true
     
     steps:
