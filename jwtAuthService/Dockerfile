@@ -5,12 +5,8 @@
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# Copier les fichiers de configuration Maven
+# Copier le pom.xml et télécharger les dépendances
 COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
-
-# Télécharger les dépendances (pour cache Docker)
 RUN mvn dependency:go-offline -B || true
 
 # Copier le code source
