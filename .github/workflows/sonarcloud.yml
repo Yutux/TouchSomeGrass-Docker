@@ -25,7 +25,6 @@
 
 # Feel free to take a look at our documentation (https://docs.sonarcloud.io/getting-started/github/)
 # or reach out to our community forum if you need some help (https://community.sonarsource.com/c/help/sc/9)
-
 name: Code Quality - SonarCloud (Multi-Modules)
 
 on:
@@ -119,40 +118,34 @@ jobs:
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       ##########################################################
-      # 🔹 7️⃣ (Optionnel) Vérifier le Quality Gate SonarCloud
-      ##########################################################
-            ##########################################################
-      # ✅ QUALITY GATE DirectoryService
+      # 🔹 7️⃣ QUALITY GATE SonarCloud (Nouvelle action officielle)
       ##########################################################
       - name: SonarCloud Quality Gate - DirectoryService
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
-          projectKey: yutux_yutux-directoryservice
-          organization: ${{ secrets.SONAR_ORG }}
+          args: >
+            -Dsonar.projectKey=yutux_yutux-directoryservice
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
 
-      ##########################################################
-      # ✅ QUALITY GATE jwtAuthService
-      ##########################################################
       - name: SonarCloud Quality Gate - jwtAuthService
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
-          projectKey: yutux_yutux-jwtauthservice
-          organization: ${{ secrets.SONAR_ORG }}
+          args: >
+            -Dsonar.projectKey=yutux_yutux-jwtauthservice
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
 
-      ##########################################################
-      # ✅ QUALITY GATE cloudGateway
-      ##########################################################
       - name: SonarCloud Quality Gate - cloudGateway
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
-          projectKey: yutux_yutux-cloudgateway
-          organization: ${{ secrets.SONAR_ORG }}
+          args: >
+            -Dsonar.projectKey=yutux_yutux-cloudgateway
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
