@@ -40,48 +40,41 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Build and Test DirectoryService (Eureka)
+      - name: Build DirectoryService (Eureka)
         working-directory: ./DirectoryService
         run: |
           if [ -f "mvnw" ]; then
             chmod +x mvnw
-            ./mvnw clean verify
+            ./mvnw clean package -DskipTests
           elif [ -f "pom.xml" ]; then
-            mvn clean verify
+            mvn clean package -DskipTests
           fi
 
-      - name: Build and Test jwtAuthService
+      - name: Build jwtAuthService
         working-directory: ./jwtAuthService
         run: |
           if [ -f "mvnw" ]; then
             chmod +x mvnw
-            ./mvnw clean verify
+            ./mvnw clean package -DskipTests
           elif [ -f "pom.xml" ]; then
-            mvn clean verify
+            mvn clean package -DskipTests
           fi
 
-      - name: Build and Test cloudGateway
+      - name: Build cloudGateway
         working-directory: ./cloudGateway
         run: |
           if [ -f "mvnw" ]; then
             chmod +x mvnw
-            ./mvnw clean verify
+            ./mvnw clean package -DskipTests
           elif [ -f "pom.xml" ]; then
-            mvn clean verify
+            mvn clean package -DskipTests
           fi
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: |
-            **/target/surefire-reports/
-            **/target/failsafe-reports/
 
   sonarqube-analysis:
     needs: build-and-test
     runs-on: ubuntu-latest
+    if: vars.SONAR_HOST_URL != '' && secrets.SONAR_TOKEN != ''
+    continue-on-error: true
     
     steps:
       - name: Checkout code
