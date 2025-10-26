@@ -5,12 +5,8 @@
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# Copier les fichiers de configuration Maven
+# Copier le pom.xml et télécharger les dépendances
 COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
-
-# Télécharger les dépendances (pour cache Docker)
 RUN mvn dependency:go-offline -B || true
 
 # Copier le code source
@@ -34,7 +30,7 @@ COPY --from=builder --chown=spring:spring /app/target/*.jar app.jar
 USER spring:spring
 
 # Variables d'environnement
-# ENV SPRING_PROFILES_ACTIVE=docker
+ENV SPRING_PROFILES_ACTIVE=docker
 ENV SERVER_PORT=8761
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
