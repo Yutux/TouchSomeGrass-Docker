@@ -26,7 +26,7 @@
 # Feel free to take a look at our documentation (https://docs.sonarcloud.io/getting-started/github/)
 # or reach out to our community forum if you need some help (https://community.sonarsource.com/c/help/sc/9)
 
-name: Code Quality - SonarCloud
+name: Code Quality - SonarCloud (Multi-Modules)
 
 on:
   push:
@@ -35,29 +35,75 @@ on:
 
 jobs:
   analyze:
+    name: Build & Analyze All Services
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # nécessaire pour une analyse complète SonarCloud
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # Exemple Maven (adaptez selon vos modules)
-      - name: Build (no tests) for analysis
-        run: |
-          mvn -B -DskipTests clean package
+      - name: Cache Sonar packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      ##########################################################
+      # 🔹 ANALYSE MODULE 1 : DirectoryService (Eureka Server)
+      ##########################################################
+      - name: Analyze DirectoryService
+        working-directory: ./DirectoryService
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
-            -Dsonar.java.binaries=**/target/classes
+        run: |
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=Yutux_DirectoryService \
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+      ##########################################################
+      # 🔹 ANALYSE MODULE 2 : jwtAuthService (Auth Service)
+      ##########################################################
+      - name: Analyze jwtAuthService
+        working-directory: ./jwtAuthService
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=Yutux_jwtAuthService \
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+      ##########################################################
+      # 🔹 ANALYSE MODULE 3 : cloudGateway (API Gateway)
+      ##########################################################
+      - name: Analyze cloudGateway
+        working-directory: ./cloudGateway
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=Yutux_cloudGateway \
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
