@@ -30,7 +30,7 @@ COPY --from=builder --chown=spring:spring /app/target/*.jar app.jar
 USER spring:spring
 
 # Variables d'environnement
-ENV SPRING_PROFILES_ACTIVE=docker
+# ENV SPRING_PROFILES_ACTIVE=docker
 ENV SERVER_PORT=8761
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
@@ -41,3 +41,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 EXPOSE 8761
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+
