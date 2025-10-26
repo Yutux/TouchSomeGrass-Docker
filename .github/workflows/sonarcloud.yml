@@ -38,17 +38,26 @@ jobs:
     name: Build & Analyze All Services
 
     steps:
+      ##########################################################
+      # 1️⃣ Checkout repository
+      ##########################################################
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      ##########################################################
+      # 2️⃣ Set up Java
+      ##########################################################
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      ##########################################################
+      # 3️⃣ Cache Maven & Sonar
+      ##########################################################
       - name: Cache Maven & Sonar
         uses: actions/cache@v4
         with:
@@ -62,13 +71,18 @@ jobs:
       # 🟦 DirectoryService
       ##########################################################
       - name: SonarCloud Scan - DirectoryService
-        working-directory: ./DirectoryService
-        uses: SonarSource/sonarqube-scan-action@v5
+        run: |
+          cd DirectoryService
+          echo "📦 Running SonarCloud analysis for DirectoryService..."
+          sonar-scanner \
+            -Dsonar.projectKey=yutux_yutux-directoryservice \
+            -Dsonar.organization=yutux \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
 
-      - name: SonarCloud Quality Gate - DirectoryService
+      - name: Quality Gate - DirectoryService
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         with:
           scanMetadataReportFile: ./DirectoryService/.scannerwork/report-task.txt
@@ -80,13 +94,18 @@ jobs:
       # 🟩 jwtAuthService
       ##########################################################
       - name: SonarCloud Scan - jwtAuthService
-        working-directory: ./jwtAuthService
-        uses: SonarSource/sonarqube-scan-action@v5
+        run: |
+          cd jwtAuthService
+          echo "📦 Running SonarCloud analysis for jwtAuthService..."
+          sonar-scanner \
+            -Dsonar.projectKey=yutux_yutux-jwtauthservice \
+            -Dsonar.organization=yutux \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
 
-      - name: SonarCloud Quality Gate - jwtAuthService
+      - name: Quality Gate - jwtAuthService
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         with:
           scanMetadataReportFile: ./jwtAuthService/.scannerwork/report-task.txt
@@ -98,13 +117,18 @@ jobs:
       # 🟨 cloudGateway
       ##########################################################
       - name: SonarCloud Scan - cloudGateway
-        working-directory: ./cloudGateway
-        uses: SonarSource/sonarqube-scan-action@v5
+        run: |
+          cd cloudGateway
+          echo "📦 Running SonarCloud analysis for cloudGateway..."
+          sonar-scanner \
+            -Dsonar.projectKey=yutux_yutux-cloudgateway \
+            -Dsonar.organization=yutux \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
 
-      - name: SonarCloud Quality Gate - cloudGateway
+      - name: Quality Gate - cloudGateway
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         with:
           scanMetadataReportFile: ./cloudGateway/.scannerwork/report-task.txt
