@@ -73,7 +73,7 @@ jobs:
   sonarqube-analysis:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: vars.SONAR_HOST_URL != '' && secrets.SONAR_TOKEN != ''
+    if: github.event_name == 'push' && env.SONAR_HOST_URL != ''
     continue-on-error: true
     
     steps:
@@ -167,7 +167,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   docker-build-push:
-    needs: [build-and-test, sonarqube-analysis]
+    needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
