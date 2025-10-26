@@ -79,6 +79,13 @@ pipeline {
         }
         
         stage('Run Tests') {
+            when {
+                expression { 
+                    return fileExists('DirectoryService/src/test') || 
+                           fileExists('jwtAuthService/src/test') || 
+                           fileExists('cloudGateway/src/test')
+                }
+            }
             parallel {
                 stage('Test Eureka Server') {
                     steps {
