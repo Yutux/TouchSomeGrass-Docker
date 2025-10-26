@@ -1,0 +1,227 @@
+name: Build and Deploy Docker Services
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  # Remplacez par votre username Docker Hub
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build DirectoryService (Eureka)
+        working-directory: ./DirectoryService
+        run: |
+          if [ -f "mvnw" ]; then
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+          elif [ -f "pom.xml" ]; then
+            mvn clean package -DskipTests
+          fi
+
+      - name: Build jwtAuthService
+        working-directory: ./jwtAuthService
+        run: |
+          if [ -f "mvnw" ]; then
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+          elif [ -f "pom.xml" ]; then
+            mvn clean package -DskipTests
+          fi
+
+      - name: Build cloudGateway
+        working-directory: ./cloudGateway
+        run: |
+          if [ -f "mvnw" ]; then
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+          elif [ -f "pom.xml" ]; then
+            mvn clean package -DskipTests
+          fi
+
+  docker-build-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    strategy:
+      matrix:
+        service:
+          - name: eureka-server
+            context: ./DirectoryService
+            dockerfile: ./DirectoryService/Dockerfile
+          - name: auth-service
+            context: ./jwtAuthService
+            dockerfile: ./jwtAuthService/Dockerfile
+          - name: gateway-service
+            context: ./cloudGateway
+            dockerfile: ./cloudGateway/Dockerfile
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build ${{ matrix.service.name }}
+        working-directory: ${{ matrix.service.context }}
+        run: |
+          if [ -f "mvnw" ]; then
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+          elif [ -f "pom.xml" ]; then
+            mvn clean package -DskipTests
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create docker-compose.yml for deployment
+        run: |
+          cat > docker-compose.prod.yml << 'EOF'
+          version: '3.8'
+          services:
+            mysql-container:
+              image: mysql:5.7
+              container_name: mysql-container
+              environment:
+                MYSQL_DATABASE: db_jwtsecure
+                MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+              ports:
+                - "3306:3306"
+              volumes:
+                - mysql-data:/var/lib/mysql
+              networks:
+                - app-network
+              restart: unless-stopped
+              
+            eureka-server:
+              image: ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
+              container_name: eureka-server
+              ports:
+                - "8761:8761"
+              environment:
+                SPRING_PROFILES_ACTIVE: docker
+              networks:
+                - app-network
+              restart: unless-stopped
+              
+            auth-service:
+              image: ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+              container_name: authentication-service
+              ports:
+                - "8080:8080"
+              environment:
+                SPRING_PROFILES_ACTIVE: docker
+              depends_on:
+                - mysql-container
+                - eureka-server
+              networks:
+                - app-network
+              restart: unless-stopped
+              
+            gateway-service:
+              image: ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
+              container_name: gateway-service
+              ports:
+                - "8088:8088"
+              environment:
+                SPRING_PROFILES_ACTIVE: docker
+              depends_on:
+                - eureka-server
+              networks:
+                - app-network
+              restart: unless-stopped
+              
+          networks:
+            app-network:
+              driver: bridge
+              
+          volumes:
+            mysql-data:
+          EOF
+
+      - name: Deploy info
+        run: |
+          echo "🚀 Docker images have been built and pushed successfully!"
+          echo "📦 Images are available at:"
+          echo "  - ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest"
+          echo "  - ${{ secrets.DOCKER_USERNAME }}/auth-service:latest"
+          echo "  - ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest"
+          echo ""
+          echo "To deploy, run: docker-compose -f docker-compose.prod.yml up -d"
+
+      # Optionnel: Déploiement automatique sur un serveur distant
+      # - name: Deploy to server
+      #   uses: appleboy/ssh-action@v1.0.0
+      #   with:
+      #     host: ${{ secrets.SERVER_HOST }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     key: ${{ secrets.SERVER_SSH_KEY }}
+      #     script: |
+      #       cd /path/to/your/app
+      #       docker-compose -f docker-compose.prod.yml pull
+      #       docker-compose -f docker-compose.prod.yml up -d
