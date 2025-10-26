@@ -39,17 +39,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      ##########################################################
+      # 1️⃣ Cloner le code
+      ##########################################################
+      - name: Checkout source code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # nécessaire pour une analyse complète SonarCloud
+          fetch-depth: 0  # nécessaire pour une analyse complète des diffs Git
 
+      ##########################################################
+      # 2️⃣ Installer Java & Maven
+      ##########################################################
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Cache Sonar packages
+      ##########################################################
+      # 3️⃣ Cache Maven & Sonar
+      ##########################################################
+      - name: Cache SonarCloud packages
         uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
@@ -64,7 +74,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       ##########################################################
-      # 🔹 ANALYSE MODULE 1 : DirectoryService (Eureka Server)
+      # 🔹 4️⃣ ANALYSE DU MODULE DirectoryService
       ##########################################################
       - name: Analyze DirectoryService
         working-directory: ./DirectoryService
@@ -72,14 +82,14 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=Yutux_DirectoryService \
+            -Dsonar.projectKey=yutux_yutux-directoryservice \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       ##########################################################
-      # 🔹 ANALYSE MODULE 2 : jwtAuthService (Auth Service)
+      # 🔹 5️⃣ ANALYSE DU MODULE jwtAuthService
       ##########################################################
       - name: Analyze jwtAuthService
         working-directory: ./jwtAuthService
@@ -87,14 +97,14 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=Yutux_jwtAuthService \
+            -Dsonar.projectKey=yutux_yutux-jwtauthservice \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       ##########################################################
-      # 🔹 ANALYSE MODULE 3 : cloudGateway (API Gateway)
+      # 🔹 6️⃣ ANALYSE DU MODULE cloudGateway
       ##########################################################
       - name: Analyze cloudGateway
         working-directory: ./cloudGateway
@@ -102,8 +112,17 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=Yutux_cloudGateway \
+            -Dsonar.projectKey=yutux_yutux-cloudgateway \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+      ##########################################################
+      # 🔹 7️⃣ (Optionnel) Vérifier le Quality Gate SonarCloud
+      ##########################################################
+      - name: SonarCloud Quality Gate
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
