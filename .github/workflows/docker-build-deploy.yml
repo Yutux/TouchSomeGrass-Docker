@@ -73,6 +73,8 @@ jobs:
   sonarqube-analysis:
     needs: build-and-test
     runs-on: ubuntu-latest
+    # Skip ce job si SonarQube n'est pas configuré
+    if: false
     continue-on-error: true
     
     steps:
