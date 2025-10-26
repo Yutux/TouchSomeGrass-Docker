@@ -106,7 +106,7 @@ jobs:
           if [ -f "mvnw" ]; then
             chmod +x mvnw
             ./mvnw sonar:sonar \
-              -Dsonar.projectKey=eureka-server \
+              -Dsonar.projectKey=yutux_yutux-directoryservice \
               -Dsonar.projectName="Eureka Server" \
               -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
               -Dsonar.token=${{ secrets.SONAR_TOKEN }}
@@ -127,7 +127,7 @@ jobs:
           if [ -f "mvnw" ]; then
             chmod +x mvnw
             ./mvnw sonar:sonar \
-              -Dsonar.projectKey=auth-service \
+              -Dsonar.projectKey=yutux_yutux-jwtauthservice \
               -Dsonar.projectName="JWT Auth Service" \
               -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
               -Dsonar.token=${{ secrets.SONAR_TOKEN }}
@@ -148,7 +148,7 @@ jobs:
           if [ -f "mvnw" ]; then
             chmod +x mvnw
             ./mvnw sonar:sonar \
-              -Dsonar.projectKey=gateway-service \
+              -Dsonar.projectKey=yutux_yutux-cloudgateway \
               -Dsonar.projectName="Cloud Gateway" \
               -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
               -Dsonar.token=${{ secrets.SONAR_TOKEN }}
