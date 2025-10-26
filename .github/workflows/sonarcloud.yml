@@ -121,8 +121,38 @@ jobs:
       ##########################################################
       # 🔹 7️⃣ (Optionnel) Vérifier le Quality Gate SonarCloud
       ##########################################################
-      - name: SonarCloud Quality Gate
+            ##########################################################
+      # ✅ QUALITY GATE DirectoryService
+      ##########################################################
+      - name: SonarCloud Quality Gate - DirectoryService
         uses: sonarsource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          projectKey: yutux_yutux-directoryservice
+          organization: ${{ secrets.SONAR_ORG }}
+
+      ##########################################################
+      # ✅ QUALITY GATE jwtAuthService
+      ##########################################################
+      - name: SonarCloud Quality Gate - jwtAuthService
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          projectKey: yutux_yutux-jwtauthservice
+          organization: ${{ secrets.SONAR_ORG }}
+
+      ##########################################################
+      # ✅ QUALITY GATE cloudGateway
+      ##########################################################
+      - name: SonarCloud Quality Gate - cloudGateway
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          projectKey: yutux_yutux-cloudgateway
+          organization: ${{ secrets.SONAR_ORG }}
