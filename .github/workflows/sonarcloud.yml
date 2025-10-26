@@ -73,12 +73,12 @@ jobs:
       - name: SonarCloud Scan - DirectoryService
         run: |
           cd DirectoryService
-          echo "📦 Running SonarCloud analysis for DirectoryService..."
-          sonar-scanner \
+          echo "🚀 Running SonarCloud analysis for DirectoryService..."
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=yutux_yutux-directoryservice \
             -Dsonar.organization=yutux \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -96,12 +96,12 @@ jobs:
       - name: SonarCloud Scan - jwtAuthService
         run: |
           cd jwtAuthService
-          echo "📦 Running SonarCloud analysis for jwtAuthService..."
-          sonar-scanner \
+          echo "🚀 Running SonarCloud analysis for jwtAuthService..."
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=yutux_yutux-jwtauthservice \
             -Dsonar.organization=yutux \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -119,12 +119,12 @@ jobs:
       - name: SonarCloud Scan - cloudGateway
         run: |
           cd cloudGateway
-          echo "📦 Running SonarCloud analysis for cloudGateway..."
-          sonar-scanner \
+          echo "🚀 Running SonarCloud analysis for cloudGateway..."
+          mvn -B -DskipTests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=yutux_yutux-cloudgateway \
             -Dsonar.organization=yutux \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
