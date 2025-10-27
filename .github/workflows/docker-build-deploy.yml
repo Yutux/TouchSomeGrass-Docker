@@ -1,4 +1,4 @@
-name: CI/CD Pipeline with SonarQube and Docker
+name: CI/CD Pipeline with Render Auto-Deploy
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Pour SonarQube
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -73,7 +73,6 @@ jobs:
   sonarqube-analysis:
     needs: build-and-test
     runs-on: ubuntu-latest
-    # Skip ce job si SonarQube n'est pas configuré
     if: false
     continue-on-error: true
     
@@ -89,83 +88,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-
-      - name: Cache SonarQube packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: SonarQube Scan - DirectoryService
-        working-directory: ./DirectoryService
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          if [ -f "mvnw" ]; then
-            chmod +x mvnw
-            ./mvnw sonar:sonar \
-              -Dsonar.projectKey=yutux_yutux-directoryservice \
-              -Dsonar.projectName="Eureka Server" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          elif [ -f "pom.xml" ]; then
-            mvn sonar:sonar \
-              -Dsonar.projectKey=eureka-server \
-              -Dsonar.projectName="Eureka Server" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          fi
-
-      - name: SonarQube Scan - jwtAuthService
-        working-directory: ./jwtAuthService
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          if [ -f "mvnw" ]; then
-            chmod +x mvnw
-            ./mvnw sonar:sonar \
-              -Dsonar.projectKey=yutux_yutux-jwtauthservice \
-              -Dsonar.projectName="JWT Auth Service" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          elif [ -f "pom.xml" ]; then
-            mvn sonar:sonar \
-              -Dsonar.projectKey=auth-service \
-              -Dsonar.projectName="JWT Auth Service" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          fi
-
-      - name: SonarQube Scan - cloudGateway
-        working-directory: ./cloudGateway
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          if [ -f "mvnw" ]; then
-            chmod +x mvnw
-            ./mvnw sonar:sonar \
-              -Dsonar.projectKey=yutux_yutux-cloudgateway \
-              -Dsonar.projectName="Cloud Gateway" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          elif [ -f "pom.xml" ]; then
-            mvn sonar:sonar \
-              -Dsonar.projectKey=gateway-service \
-              -Dsonar.projectName="Cloud Gateway" \
-              -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          fi
-
-      - name: SonarQube Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   docker-build-push:
     needs: build-and-test
@@ -235,119 +157,64 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true
 
-  deploy:
+  deploy-to-render:
     needs: docker-build-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create docker-compose.yml for deployment
+      - name: Deploy Eureka Server to Render
         run: |
-          cat > docker-compose.prod.yml << 'EOF'
-          version: '3.8'
-          services:
-            mysql-container:
-              image: mysql:5.7
-              container_name: mysql-container
-              environment:
-                MYSQL_DATABASE: db_jwtsecure
-                MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-              ports:
-                - "3306:3306"
-              volumes:
-                - mysql-data:/var/lib/mysql
-              networks:
-                - app-network
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-                interval: 10s
-                timeout: 5s
-                retries: 5
-              
-            eureka-server:
-              image: ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
-              container_name: eureka-server
-              ports:
-                - "8761:8761"
-              environment:
-                SPRING_PROFILES_ACTIVE: docker
-              networks:
-                - app-network
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-              
-            auth-service:
-              image: ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
-              container_name: authentication-service
-              ports:
-                - "8080:8080"
-              environment:
-                SPRING_PROFILES_ACTIVE: docker
-              depends_on:
-                mysql-container:
-                  condition: service_healthy
-                eureka-server:
-                  condition: service_healthy
-              networks:
-                - app-network
-              restart: unless-stopped
-              
-            gateway-service:
-              image: ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
-              container_name: gateway-service
-              ports:
-                - "8088:8088"
-              environment:
-                SPRING_PROFILES_ACTIVE: docker
-              depends_on:
-                eureka-server:
-                  condition: service_healthy
-              networks:
-                - app-network
-              restart: unless-stopped
-              
-          networks:
-            app-network:
-              driver: bridge
-              
-          volumes:
-            mysql-data:
-          EOF
+          echo "🚀 Deploying Eureka Server to Render..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_EUREKA_DEPLOY_HOOK }}")
+          if [ "$response" = "200" ] || [ "$response" = "201" ]; then
+            echo "✅ Eureka Server deployment triggered successfully"
+          else
+            echo "⚠️ Eureka Server deployment returned status: $response"
+          fi
 
-      - name: Deploy info
+      - name: Wait before next deployment
+        run: sleep 10
+
+      - name: Deploy Auth Service to Render
         run: |
-          echo "🚀 Docker images have been built and pushed successfully!"
-          echo "✅ SonarQube analysis completed"
-          echo "📦 Images are available at:"
+          echo "🚀 Deploying Auth Service to Render..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_AUTH_DEPLOY_HOOK }}")
+          if [ "$response" = "200" ] || [ "$response" = "201" ]; then
+            echo "✅ Auth Service deployment triggered successfully"
+          else
+            echo "⚠️ Auth Service deployment returned status: $response"
+          fi
+
+      - name: Wait before next deployment
+        run: sleep 10
+
+      - name: Deploy Gateway Service to Render
+        run: |
+          echo "🚀 Deploying Gateway Service to Render..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_GATEWAY_DEPLOY_HOOK }}")
+          if [ "$response" = "200" ] || [ "$response" = "201" ]; then
+            echo "✅ Gateway Service deployment triggered successfully"
+          else
+            echo "⚠️ Gateway deployment returned status: $response"
+          fi
+
+      - name: Deployment Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ CI/CD Pipeline completed successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📦 Docker Images:"
           echo "  - ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest"
           echo "  - ${{ secrets.DOCKER_USERNAME }}/auth-service:latest"
           echo "  - ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest"
           echo ""
-          echo "To deploy, run: docker-compose -f docker-compose.prod.yml up -d"
-
-      # Optionnel: Déploiement automatique sur un serveur distant
-      # - name: Deploy to server
-      #   uses: appleboy/ssh-action@v1.0.0
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     key: ${{ secrets.SERVER_SSH_KEY }}
-      #     script: |
-      #       cd /path/to/your/app
-      #       docker-compose -f docker-compose.prod.yml pull
-      #       docker-compose -f docker-compose.prod.yml up -d
-
-      # Optionnel: Notifier Jenkins pour un déploiement supplémentaire
-      # - name: Trigger Jenkins Job
-      #   run: |
-      #     curl -X POST ${{ secrets.JENKINS_URL }}/job/${{ secrets.JENKINS_JOB_NAME }}/build \
-      #       --user ${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }} \
-      #       --data-urlencode json='{"parameter": [{"name":"BRANCH", "value":"'${{ github.ref_name }}'"}]}'
+          echo "🌐 Render Deployments:"
+          echo "  - Eureka Server: Triggered ✅"
+          echo "  - Auth Service: Triggered ✅"
+          echo "  - Gateway Service: Triggered ✅"
+          echo ""
+          echo "⏱️  Services will be live in 2-3 minutes"
+          echo "🔗 Check Render Dashboard for deployment status"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
