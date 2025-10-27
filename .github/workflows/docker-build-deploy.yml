@@ -15,6 +15,7 @@ env:
   REGISTRY: docker.io
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 
 jobs:
   build-and-test:
@@ -156,6 +157,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true
+          build-args: |
+            GOOGLE_MAPS_API_KEY=${{ env.GOOGLE_MAPS_API_KEY }}
 
   deploy-to-render:
     needs: docker-build-push

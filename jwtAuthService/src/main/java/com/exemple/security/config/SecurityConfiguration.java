@@ -42,7 +42,9 @@ public class SecurityConfiguration{
 			"/api/v1/spots/get/**",
 			"/api/v1/spots",
 			"/api/v1/uploads",
-			"/api/v1/uploads/**"
+			"/api/v1/uploads/**",
+			"/api/v1/spots/search",
+			"/api/v1/hikingspot/search"
 	};
 	
 	

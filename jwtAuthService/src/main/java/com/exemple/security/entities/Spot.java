@@ -1,6 +1,7 @@
 package com.exemple.security.entities;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -40,6 +41,8 @@ public class Spot implements Serializable {
     private double longitude;
     private String description;
     
+    private String placeId;
+    
  // ✅ Plusieurs URLs d'images (Google Maps ou upload)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
@@ -48,6 +51,9 @@ public class Spot implements Serializable {
     )
     @Column(name = "image_url", columnDefinition = "TEXT")
     private List<String> imageUrls;
+    
+    @Column(name = "last_photo_refresh")
+    private LocalDateTime lastPhotoRefresh;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "creator_id", nullable = false)

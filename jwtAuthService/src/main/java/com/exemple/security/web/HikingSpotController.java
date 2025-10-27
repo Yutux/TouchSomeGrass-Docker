@@ -1,22 +1,29 @@
 package com.exemple.security.web;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.exemple.security.dtos.HikingSpotDto;
 import com.exemple.security.dtos.HikingSpotRequestDto;
-
+import com.exemple.security.dtos.SearchRequestDto;
+import com.exemple.security.dtos.SearchResponseDto;
 import com.exemple.security.services.HikingSpotServiceConnector;
+import com.exemple.security.services.PhotoRefreshService;
+import com.exemple.security.services.SearchService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,8 +33,12 @@ import lombok.RequiredArgsConstructor;
 public class HikingSpotController {
 
 	
-	@Autowired
+	 @Autowired
 	 private HikingSpotServiceConnector hikingSpotServiceConnector;
+	 @Autowired
+	 private PhotoRefreshService photoRefreshService;
+	 @Autowired
+	 private SearchService searchService;
 
 	 @PostMapping(value = "/create", consumes = "multipart/form-data")
 	 public ResponseEntity<?> createHikingSpot(
@@ -70,6 +81,34 @@ public class HikingSpotController {
 	    public ResponseEntity<?> deleteHikingSpot(@PathVariable int id) {
 	        return hikingSpotServiceConnector.deleteHikingSpot(id);
 	    }
+	    
+	    /**
+	     * 🔄 Refresh d'un HikingSpot
+	     */
+	    @PostMapping("/refresh-photos/{id}")
+	    public ResponseEntity<?> refreshHikingSpotPhotos(@PathVariable int id) {
+	        Map<String, Object> result = photoRefreshService.refreshHikingSpot(id);
+	        return ResponseEntity.ok(result);
+	    }
+
+	    /**
+	     * 🔄 Refresh de tous les HikingSpots (admin uniquement)
+	     */
+	    @PostMapping("/refresh-all-photos")
+	    @PreAuthorize("hasRole('ADMIN')")
+	    public ResponseEntity<?> refreshAllHikingSpotsPhotos() {
+	        Map<String, Object> result = photoRefreshService.refreshAllHikingSpots();
+	        return ResponseEntity.ok(result);
+	    }
+	    
+	 // HikingSpotController.java
+	    @PostMapping("/search")
+	    public ResponseEntity<?> searchHikingSpots(
+	        @RequestBody SearchRequestDto request,
+	        @RequestHeader(value = "Authorization", required = false) String authHeader
+	    ) {
+	        SearchResponseDto<HikingSpotDto> result = searchService.searchHikingSpots(request);
+	        return ResponseEntity.ok(result);
+	    }
 	
 }
-

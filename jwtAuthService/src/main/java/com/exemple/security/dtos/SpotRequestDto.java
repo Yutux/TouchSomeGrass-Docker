@@ -18,7 +18,8 @@ public class SpotRequestDto {
     private String description;
     private double latitude;
     private double longitude;
-    private String imagePath;  
+    private String imagePath;
+    private String placeId;
     private List<String> imageUrls;
     private UserApp creator;
 }

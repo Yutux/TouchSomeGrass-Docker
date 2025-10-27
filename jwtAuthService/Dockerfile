@@ -25,6 +25,10 @@ USER spring:spring
 # ✅ Variables d'environnement adaptées à Render
 ENV SPRING_PROFILES_ACTIVE=postgres
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+# Passer la clé API Google Maps via une build-arg
+ARG GOOGLE_MAPS_API_KEY
+ENV GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+
 
 # ✅ NE PAS fixer de port ici — Render injecte automatiquement $PORT
 # (et ton Spring Boot lit déjà server.port=${PORT:8080})

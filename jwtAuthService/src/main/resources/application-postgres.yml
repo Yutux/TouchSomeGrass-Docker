@@ -18,6 +18,10 @@ spring:
   application:
     name: auth-service
 
+google:
+  maps:
+    api:
+      key: ${GOOGLE_MAPS_API_KEY}
 server:
   port: ${PORT:8080}  # Render utilise PORT (10000 en prod, 8080 en local)
 

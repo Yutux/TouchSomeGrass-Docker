@@ -1,6 +1,7 @@
 package com.exemple.security.entities;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,6 +28,8 @@ public class HikingWaypoint implements Serializable {
     private double latitude;
     private double longitude;
     private Double rating;     // Note Google Maps (optionnelle)
+    @Column(name = "last_photo_refresh")
+    private LocalDateTime lastPhotoRefresh;
 
     // ✅ Liste des photos (URLs Google Maps)
     @ElementCollection
