@@ -16,6 +16,9 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
   GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+  CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+  CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+  CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
 
 jobs:
   build-and-test:
@@ -159,6 +162,9 @@ jobs:
           no-cache: true
           build-args: |
             GOOGLE_MAPS_API_KEY=${{ env.GOOGLE_MAPS_API_KEY }}
+            CLOUDINARY_CLOUD_NAME=${{ env.CLOUDINARY_CLOUD_NAME }}
+            CLOUDINARY_API_KEY=${{ env.CLOUDINARY_API_KEY }}
+            CLOUDINARY_API_SECRET=${{ env.CLOUDINARY_API_SECRET }}
 
   deploy-to-render:
     needs: docker-build-push
