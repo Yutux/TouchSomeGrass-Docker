@@ -26,7 +26,7 @@ public class GoogleMapsUtils {
      * Construit l'URL complète d'une photo Google
      */
     public String buildPhotoUrl(String photoReference, int maxWidth) {
-        return String.format("%s?photoreference=%s&maxwidth=%d&key=%s",
+        return String.format("%s?photo_reference=%s&maxwidth=%d&key=%s",
             PHOTO_URL, photoReference, maxWidth, googleApiKey);
     }
     

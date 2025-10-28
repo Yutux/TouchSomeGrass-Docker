@@ -22,6 +22,12 @@ google:
   maps:
     api:
       key: ${GOOGLE_MAPS_API_KEY}
+cloudinary:
+  enabled: true
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
 server:
   port: ${PORT:8080}  # Render utilise PORT (10000 en prod, 8080 en local)
 
