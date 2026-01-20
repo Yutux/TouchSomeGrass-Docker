@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 import com.exemple.security.entities.Role;
 import com.exemple.security.enums.RoleName;
@@ -20,6 +21,7 @@ public class SecurityApplication {
 	}
 	
 	@Bean
+	@Profile("!test")
 	CommandLineRunner start(AccountService accountService, RoleRepository roleRepository) {
 		return args -> {
 			
