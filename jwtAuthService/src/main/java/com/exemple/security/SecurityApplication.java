@@ -7,8 +7,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
-import com.exemple.security.entities.Role;
-import com.exemple.security.enums.RoleName;
+//import com.exemple.security.entities.Role;
+//import com.exemple.security.enums.RoleName;
 import com.exemple.security.repositories.RoleRepository;
 import com.exemple.security.services.AccountService;
 
@@ -24,7 +24,7 @@ public class SecurityApplication {
 	@Profile("!test")
 	CommandLineRunner start(AccountService accountService, RoleRepository roleRepository) {
 		return args -> {
-			
+			System.out.println("✅ Application démarrée avec succès");
 			if (roleRepository.findAll().isEmpty()) {
 				accountService.createRoleIfNotExists();		
 			}else {

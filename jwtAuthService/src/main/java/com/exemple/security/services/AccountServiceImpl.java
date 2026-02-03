@@ -1,14 +1,14 @@
 package com.exemple.security.services;
 
-
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -91,5 +91,80 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
 	
 	public List<HikingSpot> getAllUserHikingSpot(UserApp user){
 		return user.getHikingSpots();
+	}
+
+	// ==========================================
+	// 🆕 NOUVELLES MÉTHODES UTILITAIRES
+	// ==========================================
+
+	/**
+	 * Récupère l'ID de l'utilisateur actuellement connecté depuis le JWT
+	 * @return L'ID de l'utilisateur connecté
+	 * @throws RuntimeException si l'utilisateur n'est pas authentifié
+	 */
+	public Integer getCurrentUserId() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (authentication == null || !authentication.isAuthenticated()) {
+			throw new RuntimeException("User not authenticated");
+		}
+
+		// Le nom d'utilisateur dans le JWT est l'email
+		String email = authentication.getName();
+		
+		if (email == null || email.equals("anonymousUser")) {
+			throw new RuntimeException("User not authenticated");
+		}
+
+		// Récupérer l'utilisateur depuis la base de données
+		UserApp user = appUserRepository.findByEmail(email)
+			.orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+		
+		return user.getId();
+	}
+
+	/**
+	 * Récupère l'utilisateur complet actuellement connecté
+	 * @return L'utilisateur connecté
+	 * @throws RuntimeException si l'utilisateur n'est pas authentifié
+	 */
+	public UserApp getCurrentUser() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (authentication == null || !authentication.isAuthenticated()) {
+			throw new RuntimeException("User not authenticated");
+		}
+
+		String email = authentication.getName();
+		
+		if (email == null || email.equals("anonymousUser")) {
+			throw new RuntimeException("User not authenticated");
+		}
+
+		return appUserRepository.findByEmail(email)
+			.orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+	}
+
+	/**
+	 * Vérifie si l'utilisateur connecté a un rôle spécifique
+	 * @param roleName Le nom du rôle à vérifier
+	 * @return true si l'utilisateur a ce rôle
+	 */
+	public boolean currentUserHasRole(RoleName roleName) {
+		try {
+			UserApp user = getCurrentUser();
+			return user.getRoles().stream()
+				.anyMatch(role -> role.getRoleName() == roleName);
+		} catch (RuntimeException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Vérifie si l'utilisateur connecté est un administrateur
+	 * @return true si l'utilisateur est admin
+	 */
+	public boolean isCurrentUserAdmin() {
+		return currentUserHasRole(RoleName.ADMIN);
 	}
 }

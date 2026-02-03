@@ -2,6 +2,7 @@ package com.exemple.security.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,9 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+
 public class FileStorageService {
 
     private final Path uploadDir;
@@ -26,11 +29,14 @@ public class FileStorageService {
      */
     @Autowired
     public FileStorageService(
-            @Value("${file.upload-dir}") String uploadDirPath,
+            /*@Value("${file.upload-dir}") String uploadDirPath,
             @Value("${cloudinary.enabled}") boolean useCloudinary,
-            CloudinaryService cloudinaryService
+            CloudinaryService cloudinaryService*/
+            @Value("${file.upload-dir:uploads}") String uploadDirPath,
+            @Value("${cloudinary.enabled:false}") boolean useCloudinary,
+            Optional<CloudinaryService> cloudinaryService
     ) {
-        this.cloudinaryService = cloudinaryService;
+        this.cloudinaryService = cloudinaryService.orElse(null);
         this.useCloudinary = useCloudinary;
 
         // Configuration du dossier local (fallback)
@@ -70,7 +76,7 @@ public class FileStorageService {
         }
 
         // Utiliser Cloudinary si activé (priorité)
-        if (useCloudinary) {
+        /*if (useCloudinary) {
             try {
                 String cloudinaryUrl = cloudinaryService.uploadFile(file);
                 System.out.println("☁️ Fichier uploadé sur Cloudinary : " + cloudinaryUrl);
@@ -78,6 +84,14 @@ public class FileStorageService {
             } catch (Exception e) {
                 System.err.println("⚠️ Erreur Cloudinary, fallback vers stockage local : " + e.getMessage());
                 // Fallback vers stockage local
+            }
+        }*/
+       if (useCloudinary && cloudinaryService != null) {
+            try {
+                String cloudinaryUrl = cloudinaryService.uploadFile(file);
+                return cloudinaryUrl;
+            } catch (Exception e) {
+                System.err.println("⚠️ Cloudinary échoué, fallback local : " + e.getMessage());
             }
         }
 
@@ -134,7 +148,15 @@ public class FileStorageService {
         }
 
         // Si c'est une URL Cloudinary
-        if (filePathOrUrl.contains("cloudinary.com")) {
+        /*if (filePathOrUrl.contains("cloudinary.com")) {
+            String publicId = cloudinaryService.extractPublicIdFromUrl(filePathOrUrl);
+            if (publicId != null) {
+                cloudinaryService.deleteImage(publicId);
+                System.out.println("☁️ Image supprimée de Cloudinary : " + publicId);
+                return;
+            }
+        }*/
+       if (filePathOrUrl.contains("cloudinary.com") && cloudinaryService != null) {
             String publicId = cloudinaryService.extractPublicIdFromUrl(filePathOrUrl);
             if (publicId != null) {
                 cloudinaryService.deleteImage(publicId);

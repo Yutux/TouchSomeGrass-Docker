@@ -1,7 +1,6 @@
 package com.exemple.security.services;
 
 import java.util.List;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,19 +10,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
 import com.exemple.security.config.JwtService;
 import com.exemple.security.dtos.AuthenticationRequestDto;
 import com.exemple.security.dtos.AuthenticationResponseDto;
 import com.exemple.security.dtos.RegisterRequestDto;
 import com.exemple.security.dtos.UserAppListDto;
-import com.exemple.security.entities.HikingSpot;
-import com.exemple.security.entities.Spot;
 import com.exemple.security.entities.UserApp;
 import com.exemple.security.enums.RoleName;
 import com.exemple.security.repositories.RoleRepository;
 import com.exemple.security.repositories.UserRepository;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -81,8 +76,8 @@ public class AuthenticationService {
 		return ResponseEntity.ok()
 				.headers(responseHeaders)
 				.body(AuthenticationResponseDto.builder()
-						.message("User registered with success")
-						.token(jwtToken)
+						.message("User authenticated with success")
+						.token(jwtToken) //test without header
 						.build());
 	}
 	
@@ -115,48 +110,47 @@ public class AuthenticationService {
 				.build()
 				);
 	}
-	/*
-	public ResponseEntity<AuthenticationResponseDto> update(RegisterRequestDto req){
-		var user = repository.findByEmail(req.getEmail()).orElseThrow(()-> new UsernameNotFoundException("User Not found"));
-		
-		
-		var updateUser = UserApp.builder()
-				.firstname(req.getFirstname())
-				.lastname(req.getLastname())
-				.email(req.getEmail())
-				.build();
-		
-		repository.save(user);
-	}*/
-	
 	public ResponseEntity<AuthenticationResponseDto> isLoggin(String header){
-		
 		try {
-	        var jwtToken = jwtService.extractUsername(header);
-	        if (jwtToken == null || jwtToken.isEmpty()) {
-	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-	                    .body(AuthenticationResponseDto.builder()
-	                            .message("Invalid token")
-	                            .build());
-	        }
+			if (header == null || !header.startsWith("Bearer ")) {
+				System.out.println("missing headers");
+				System.out.println(header);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(AuthenticationResponseDto.builder()
+								.message("Missing or invalid Authorization header")
+								.build());
+			}
 
-	        var user = repository.findByEmail(jwtToken)
-	                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+			String token = header.substring(7); // enlever "Bearer "
+			var jwtToken = jwtService.extractUsername(token);
 
-	        List<HikingSpot> userHikingSpots = user.getHikingSpots();
-	        List<Spot> userSpots = user.getSpots();
-	        return ResponseEntity.ok()
-	                .body(AuthenticationResponseDto.builder()
-	                        .message("success")
-	                        .userApp(user)
-	                        .userHikingSpots(userHikingSpots)
-	                        .userSpots(userSpots)
-	                        .build());
-	    } catch (Exception e) {
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                .body(AuthenticationResponseDto.builder()
-	                        .message("Error processing request: " + e.getMessage())
-	                        .build());
-	    }
+			if (jwtToken == null || jwtToken.isEmpty()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(AuthenticationResponseDto.builder()
+								.message("Invalid token")
+								.build());
+			}
+
+			var user = repository.findByEmail(jwtToken)
+					.orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+			return ResponseEntity.ok(AuthenticationResponseDto.builder()
+					.message("success")
+					.userApp(user)
+					.userHikingSpots(user.getHikingSpots())
+					.userSpots(user.getSpots())
+					.favoriteSpots(user.getFavoriteSpots())
+					.favoriteHikingSpots(user.getFavoriteHikingSpots())
+					.friends(user.getFriends())
+					.build());
+
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(AuthenticationResponseDto.builder()
+							.message("Error processing request: " + e.getMessage())
+							.build());
+		}
 	}
+
+	
 }

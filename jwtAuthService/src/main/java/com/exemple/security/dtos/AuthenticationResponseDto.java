@@ -21,4 +21,7 @@ public class AuthenticationResponseDto {
   private UserApp userApp;
   private List<HikingSpot> userHikingSpots;
   private List<Spot> userSpots;
+  private List<Spot> favoriteSpots;
+  private List<HikingSpot> favoriteHikingSpots;
+  private List<UserApp> friends;
 }
