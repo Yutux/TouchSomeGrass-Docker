@@ -24,13 +24,18 @@ public class SecurityApplication {
 	@Profile("!test")
 	CommandLineRunner start(AccountService accountService, RoleRepository roleRepository) {
 		return args -> {
+			System.out.println("========================================");
 			System.out.println("✅ Application démarrée avec succès");
-			if (roleRepository.findAll().isEmpty()) {
-				accountService.createRoleIfNotExists();		
-			}else {
-				System.out.println("is fill");
-				
-			}
+			System.out.println("========================================");
+			
+			accountService.createRoleIfNotExists();
+			
+			long roleCount = roleRepository.count();
+			System.out.println("📊 Nombre de rôles en base : " + roleCount);
+			
+			System.out.println("========================================");
+			System.out.println("✅ Initialisation terminée");
+			System.out.println("========================================");
 		};
 	}
 }

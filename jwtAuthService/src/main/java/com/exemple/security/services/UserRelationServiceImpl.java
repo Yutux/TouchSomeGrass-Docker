@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.exemple.security.config.JwtService;
 import com.exemple.security.dtos.AuthenticationResponseDto;
+import com.exemple.security.dtos.FriendsListResponseDto;
 import com.exemple.security.entities.HikingSpot;
 import com.exemple.security.entities.Spot;
 import com.exemple.security.entities.UserApp;
@@ -281,7 +282,7 @@ public class UserRelationServiceImpl implements UserRelationService {
     }
 
     @Override
-    public ResponseEntity<List<UserApp>> getFriendsFromAuth(String authHeader) {
+    public ResponseEntity<FriendsListResponseDto> getFriendsFromAuth(String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -297,8 +298,18 @@ public class UserRelationServiceImpl implements UserRelationService {
             UserApp user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            return ResponseEntity.ok(getFriends(user.getId()));
+            List<UserApp> friends = getFriends(user.getId());
 
+            // ✅ Utiliser le DTO
+            FriendsListResponseDto response = FriendsListResponseDto.builder()
+                .friends(friends)
+                .count(friends.size())
+                .build();
+            
+            return ResponseEntity.ok(response);
+
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

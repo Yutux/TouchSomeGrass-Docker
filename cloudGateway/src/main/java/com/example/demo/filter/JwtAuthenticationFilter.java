@@ -81,41 +81,65 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         return exchange.getResponse().setComplete();
     }
 
-     @Override
+    @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-
-            // OPTIONS (CORS)
-            if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+            var request = exchange.getRequest();
+            
+            // 🔍 LOG 1 : Requête entrante
+            System.out.println("===========================================");
+            System.out.println("🌐 GATEWAY - Request received:");
+            System.out.println("   Method: " + request.getMethod());
+            System.out.println("   Path: " + request.getURI().getPath());
+            System.out.println("   Full URI: " + request.getURI());
+            
+            // 🔍 LOG 2 : Check si route sécurisée
+            boolean isSecured = validator.isSecured.test(request);
+            System.out.println("   Is Secured: " + isSecured);
+            
+            if (!isSecured) {
+                System.out.println("   ✅ PUBLIC ROUTE - Passing through");
+                System.out.println("===========================================");
                 return chain.filter(exchange);
             }
-
-            // Route publique
-            if (!validator.isSecured.test(exchange.getRequest())) {
-                return chain.filter(exchange);
+            
+            // 🔍 LOG 3 : Vérification du header Authorization
+            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                System.out.println("   ❌ MISSING Authorization header");
+                System.out.println("===========================================");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
             }
 
-            String authHeader = exchange.getRequest()
-                    .getHeaders()
-                    .getFirst(HttpHeaders.AUTHORIZATION);
-
-            // Pas de token → on laisse passer
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return chain.filter(exchange);
+            String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
+            System.out.println("   Authorization header: " + authHeader.substring(0, Math.min(20, authHeader.length())) + "...");
+            
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                authHeader = authHeader.substring(7);
+                
+                // 🔍 LOG 4 : Validation JWT
+                try {
+                    System.out.println("   🔑 Validating JWT token...");
+                    jwtService.validateToken(authHeader);
+                    System.out.println("   ✅ JWT VALID - Routing to service");
+                    System.out.println("===========================================");
+                } catch (Exception e) {
+                    System.out.println("   ❌ JWT INVALID: " + e.getMessage());
+                    System.out.println("===========================================");
+                    exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                    return exchange.getResponse().setComplete();
+                }
+            } else {
+                System.out.println("   ❌ Invalid Authorization header format");
+                System.out.println("===========================================");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
             }
-
-            try {
-                String token = authHeader.substring(7);
-                jwtService.validateToken(token);
-            } catch (Exception e) {
-                // 🔕 On absorbe
-                // Le microservice décidera
-            }
-
+            
             return chain.filter(exchange);
         };
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 }
-

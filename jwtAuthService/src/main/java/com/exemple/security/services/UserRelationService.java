@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.exemple.security.dtos.AuthenticationResponseDto;
+import com.exemple.security.dtos.FriendsListResponseDto;
 import com.exemple.security.entities.HikingSpot;
 import com.exemple.security.entities.Spot;
 import com.exemple.security.entities.UserApp;
@@ -26,7 +27,7 @@ public interface UserRelationService {
     // Amis
     ResponseEntity<AuthenticationResponseDto> addFriendFromAuth(String authHeader, int friendId);
     ResponseEntity<AuthenticationResponseDto> removeFriendFromAuth(String authHeader, int friendId);
-    ResponseEntity<List<UserApp>> getFriendsFromAuth(String authHeader);
+    ResponseEntity<FriendsListResponseDto> getFriendsFromAuth(String authHeader);
     
     // ===== MÉTHODES INTERNES (utilisées par les méthodes FromAuth) =====
     

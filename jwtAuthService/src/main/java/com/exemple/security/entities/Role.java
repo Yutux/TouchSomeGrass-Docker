@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 public class Role implements GrantedAuthority {
 	private static final long serialVersionUID = 1L;
 	@Id
+	//@GeneratedValue
 	@Column(name = "id")
 	int id;
 	@Enumerated(EnumType.STRING)

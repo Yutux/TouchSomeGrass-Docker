@@ -1,10 +1,12 @@
 package com.exemple.security.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,10 +17,13 @@ import com.exemple.security.dtos.AuthenticationRequestDto;
 import com.exemple.security.dtos.AuthenticationResponseDto;
 import com.exemple.security.dtos.RegisterRequestDto;
 import com.exemple.security.dtos.UserAppListDto;
+import com.exemple.security.entities.Role;
 import com.exemple.security.entities.UserApp;
 import com.exemple.security.enums.RoleName;
 import com.exemple.security.repositories.RoleRepository;
 import com.exemple.security.repositories.UserRepository;
+import com.exemple.security.tools.CustomPasswordEncoder;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -32,54 +37,97 @@ public class AuthenticationService {
 	private final AuthenticationManager authenticationManager;
 	private final AccountService accountService;
 	private RoleName defaultRole = RoleName.USER;
+	private final CustomPasswordEncoder passwordEncoder;
 	
 	public ResponseEntity<AuthenticationResponseDto> register(RegisterRequestDto request) {
-		if (repository.findByEmail(request.getEmail()).isPresent()) {
-			return ResponseEntity.badRequest()
-					.body(AuthenticationResponseDto.builder()
-					.message("Un utilisateur avec cet e-mail existe déjà.")
-					.build());
-		}
-		var user = UserApp.builder()
-				.firstname(request.getFirstname())
-				.lastname(request.getLastname())
-				.email(request.getEmail())
-				.password(request.getPassword())
-				.roles(request.setRoles(roleRepository.findByRoleName(defaultRole)))
-				.build();
-		
-		
-		accountService.addNewUser(user);
-		var jwtToken = jwtService.generateToken(user);
-
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.add("Authorization", "Bearer " + jwtToken);
-		
-		return ResponseEntity.ok()
-				.headers(responseHeaders)
-				.body(AuthenticationResponseDto.builder()
-				.message("Enregistrement avec succes.")
-				.build());
-	}
+        // 1️⃣ Vérifier si l'utilisateur existe déjà
+        if (repository.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest()
+                .body(AuthenticationResponseDto.builder()
+                    .message("Un utilisateur avec cet e-mail existe déjà.")
+                    .build());
+        }
+        
+        // 2️⃣ Récupérer le rôle USER (automatique pour tous les nouveaux utilisateurs)
+        Role userRole = roleRepository.findByRoleName(RoleName.USER)
+            .orElseThrow(() -> new RuntimeException("Le rôle USER n'existe pas en base de données"));
+        
+        // 3️⃣ Créer l'utilisateur avec le rôle USER
+        UserApp user = UserApp.builder()
+            .firstname(request.getFirstname())
+            .lastname(request.getLastname())
+            .email(request.getEmail())
+            .password(request.getPassword())
+            .roles(new ArrayList<>(List.of(userRole)))
+            .build();
+        
+        // 4️⃣ Sauvegarder l'utilisateur
+        UserApp savedUser = accountService.addNewUser(user);
+        
+        System.out.println("✅ Utilisateur créé avec le rôle USER : " + savedUser.getEmail());
+        
+        // 5️⃣ Générer le token JWT
+        String jwtToken = jwtService.generateToken(savedUser);
+        
+        // 6️⃣ Retourner la réponse avec le token
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add("Authorization", "Bearer " + jwtToken);
+        
+        return ResponseEntity.ok()
+            .headers(responseHeaders)
+            .body(AuthenticationResponseDto.builder()
+                .message("Enregistrement avec succès. Rôle USER assigné.")
+                .build());
+    }
 
 	public ResponseEntity<AuthenticationResponseDto> authenticate(AuthenticationRequestDto request) {
-	
-		Authentication authentication = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-		
-		var user = repository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
-		var jwtToken = jwtService.generateToken(user);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.add("Authorization", "Bearer " + jwtToken);
-		return ResponseEntity.ok()
-				.headers(responseHeaders)
-				.body(AuthenticationResponseDto.builder()
-						.message("User authenticated with success")
-						.token(jwtToken) //test without header
-						.build());
-	}
+
+    try {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getEmail(),
+                request.getPassword()
+            )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        var user = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        var jwtToken = jwtService.generateToken(user);
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add("Authorization", "Bearer " + jwtToken);
+
+        return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body(AuthenticationResponseDto.builder()
+                        .message("User authenticated with success")
+                        .token(jwtToken)
+                        .build());
+
+    } catch (BadCredentialsException e) {
+        // 🔐 identifiants incorrects
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthenticationResponseDto.builder()
+                        .message("Email ou mot de passe incorrect")
+                        .build());
+
+    } catch (UsernameNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthenticationResponseDto.builder()
+                        .message("Utilisateur introuvable")
+                        .build());
+
+    } catch (Exception e) {
+        // 🔥 toute autre erreur inattendue
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(AuthenticationResponseDto.builder()
+                        .message("Erreur lors de l'authentification")
+                        .build());
+    }
+}
 	
 	public ResponseEntity<UserAppListDto> getAllUsers(){
 		List<UserApp> userList = repository.findAll();

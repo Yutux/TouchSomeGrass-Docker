@@ -29,7 +29,7 @@ public class UserRelationController {
     private final UserRelationService userRelationService;
     private final MessageService messageService;
     private final CommentService commentService;
-    private final GroupService groupService;
+    //private final GroupService groupService;
     private final ConversationService conversationService;
     
     // ========================================
@@ -99,7 +99,7 @@ public class UserRelationController {
     }
     
     @GetMapping("/friends")
-    public ResponseEntity<List<UserApp>> getFriends(
+    public ResponseEntity<?> getFriends(
             @RequestHeader("Authorization") String authHeader) {
         return userRelationService.getFriendsFromAuth(authHeader);
     }
@@ -221,89 +221,6 @@ public class UserRelationController {
     }
     
     // ========================================
-    // 🔐 GROUPES (AVEC AUTH)
-    // ========================================
-    
-    @PostMapping("/groups")
-    public ResponseEntity<GroupResponseDto> createGroup(
-            @RequestBody CreateGroupDto request,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.createGroupFromAuth(authHeader, request);
-    }
-
-    @GetMapping("/groups/{groupId}/members")
-    public ResponseEntity<?> getGroupMembers(
-            @PathVariable int groupId,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.getGroupMembersFromAuth(authHeader, groupId);
-    }
-    
-    @GetMapping("/groups")
-    public ResponseEntity<GroupResponseDto> getUserGroups(
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.getUserGroupsFromAuth(authHeader);
-    }
-    
-    @PostMapping("/groups/{groupId}/members/{userId}")
-    public ResponseEntity<GroupResponseDto> addMemberToGroup(
-            @PathVariable int groupId,
-            @PathVariable int userId,
-            @RequestParam(required = false) GroupRole role,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.addMemberToGroupFromAuth(authHeader, groupId, userId, role);
-    }
-    
-    @DeleteMapping("/groups/{groupId}/members/{userId}")
-    public ResponseEntity<GroupResponseDto> removeMemberFromGroup(
-            @PathVariable int groupId,
-            @PathVariable int userId,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.removeMemberFromGroupFromAuth(authHeader, groupId, userId);
-    }
-    
-    @PutMapping("/groups/{groupId}/members/{userId}/role")
-    public ResponseEntity<GroupResponseDto> changeMemberRole(
-            @PathVariable int groupId,
-            @PathVariable int userId,
-            @RequestParam GroupRole newRole,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.changeMemberRoleFromAuth(authHeader, groupId, userId, newRole);
-    }
-    
-    @PostMapping("/groups/{groupId}/leave")
-    public ResponseEntity<GroupResponseDto> leaveGroup(
-            @PathVariable int groupId,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.leaveGroupFromAuth(authHeader, groupId);
-    }
-    
-    @DeleteMapping("/groups/{groupId}")
-    public ResponseEntity<GroupResponseDto> deleteGroup(
-            @PathVariable int groupId,
-            @RequestHeader("Authorization") String authHeader) {
-        return groupService.deleteGroupFromAuth(authHeader, groupId);
-    }
-    
-    // ========================================
-    // 🔓 GROUPES PUBLICS (SANS AUTH)
-    // ========================================
-    
-    @GetMapping("/groups/{groupId}")
-    public ResponseEntity<GroupResponseDto> getGroupById(@PathVariable int groupId) {
-        return groupService.getGroupById(groupId);
-    }
-    
-    @GetMapping("/groups/public")
-    public ResponseEntity<GroupResponseDto> getPublicGroups() {
-        return groupService.getPublicGroups();
-    }
-    
-    @GetMapping("/groups/search")
-    public ResponseEntity<GroupResponseDto> searchPublicGroups(@RequestParam String name) {
-        return groupService.searchPublicGroups(name);
-    }
-    
-    // ========================================
     // 🔐 CONVERSATIONS (AVEC AUTH)
     // ========================================
     
@@ -314,10 +231,13 @@ public class UserRelationController {
         return conversationService.createPrivateConversationFromAuth(authHeader, request);
     }
     
-    @PostMapping("/conversations/group")
+    @PostMapping("/groups/{groupId}/conversations")
     public ResponseEntity<ConversationResponseDto> createGroupConversation(
+            @PathVariable int groupId,
             @RequestBody CreateConversationDto request,
             @RequestHeader("Authorization") String authHeader) {
+        System.out.println("Creating conversation for group: " + groupId);
+        request.setGroupId(groupId);
         return conversationService.createGroupConversationFromAuth(authHeader, request);
     }
     
@@ -331,6 +251,7 @@ public class UserRelationController {
     public ResponseEntity<ConversationResponseDto> getGroupConversations(
             @PathVariable int groupId,
             @RequestHeader("Authorization") String authHeader) {
+        //System.out.println("Hit this convo");
         return conversationService.getGroupConversationsFromAuth(authHeader, groupId);
     }
     

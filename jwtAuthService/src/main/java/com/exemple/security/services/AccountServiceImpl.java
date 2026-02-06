@@ -3,6 +3,7 @@ package com.exemple.security.services;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -49,24 +50,62 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
 	}
 
 	@Override
+	@Transactional
 	public void createRoleIfNotExists() {
-		Role admin = new Role(); 
-		Role user = new Role();
+		createRoleWithFixedId(1, RoleName.USER);
+		createRoleWithFixedId(2, RoleName.ADMIN);
+	}
+
+	private void createRoleWithFixedId(int fixedId, RoleName roleName) {
+		// ✅ Vérifier d'abord par ID
+		Optional<Role> roleById = appRoleRepository.findById(fixedId);
 		
-		admin.setRoleName(RoleName.ADMIN);
-		user.setRoleName(RoleName.USER);
-		
-		addNewRole(user);
-		addNewRole(admin);
+		if (roleById.isPresent()) {
+			Role role = roleById.get();
+			// ✅ L'ID existe, vérifier si c'est le bon rôle
+			if (role.getRoleName() != roleName) {
+				// ⚠️ Conflit : ID existe mais avec un autre rôle !
+				System.out.println("⚠️ Conflit détecté : ID " + fixedId + " existe avec " + role.getRoleName());
+			} else {
+				System.out.println("ℹ️ Rôle déjà existant : " + roleName + " (id=" + fixedId + ")");
+			}
+		} else {
+			// ✅ Vérifier si le rôle existe avec un autre ID
+			Optional<Role> roleByName = appRoleRepository.findByRoleName(roleName);
+			
+			if (roleByName.isPresent()) {
+				Role existingRole = roleByName.get();
+				// ⚠️ Le rôle existe mais avec un mauvais ID
+				System.out.println("⚠️ Rôle " + roleName + " existe avec id=" + existingRole.getId() + 
+								" au lieu de " + fixedId);
+				System.out.println("💡 Supprimez la base et redémarrez pour corriger les IDs");
+			} else {
+				// ✅ Créer le rôle avec l'ID fixe
+				Role role = new Role();
+				role.setId(fixedId);
+				role.setRoleName(roleName);
+				appRoleRepository.save(role);
+				System.out.println("✅ Rôle créé : " + roleName + " (id=" + fixedId + ")");
+			}
+		}
 	}
 	
 	@Override
 	public void addRoleToUser(UserApp user, List<Role> rolesName) {
 		UserApp foundUser = appUserRepository.findByEmail(user.getEmail()).orElse(null);
+		
+		if (foundUser == null) {
+			throw new RuntimeException("Utilisateur non trouvé : " + user.getEmail());
+		}
+		
+		// ✅ Compatible Java 8
 		rolesName.stream()
-	    .map(Role::getRoleName)
-	    .map(appRoleRepository::findByRoleName)
-	    .forEach(foundUser.getRoles()::add);
+			.map(Role::getRoleName)
+			.map(appRoleRepository::findByRoleName)
+			.filter(Optional::isPresent)       // Garde seulement les Optional non-vides
+			.map(Optional::get)                 // Extrait Role de Optional<Role>
+			.forEach(foundUser.getRoles()::add);
+		
 		appUserRepository.save(foundUser);	 
 	}
 	

@@ -109,7 +109,7 @@ class AuthenticationServiceTest {
     void register_NewUser_Success() {
         // Given
         when(repository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.empty());
-        when(roleRepository.findByRoleName(RoleName.USER)).thenReturn(userRole);
+        //when(roleRepository.findByRoleName(RoleName.USER)).thenReturn(userRole);
         when(accountService.addNewUser(any(UserApp.class))).thenReturn(testUser);
         when(jwtService.generateToken(any(UserApp.class))).thenReturn("generated.jwt.token");
 
