@@ -1,9 +1,9 @@
 package com.exemple.security.dtos;
 
-import java.util.List;
+//import java.util.List;
 
 import com.exemple.security.entities.HikingSpot;
-import com.exemple.security.entities.HikingWaypoint;
+//import com.exemple.security.entities.HikingWaypoint;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;

@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -10,39 +9,73 @@ import org.springframework.cloud.gateway.discovery.DiscoveryLocatorProperties;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import com.example.demo.filter.JwtAuthenticationFilter;
 
+import java.util.Arrays;
+
 @SpringBootApplication
 @EnableDiscoveryClient
-@CrossOrigin("*")
 public class CloudGatewayApplication {
-	@Autowired
-	private JwtAuthenticationFilter customHeaderFilter;
-	
-	@Bean
-	public RouteLocator gatewayRoutes(RouteLocatorBuilder builder, JwtAuthenticationFilter customHeaderFilter) {
-	    return builder.routes()
-	            .route(r -> r
-	            		.path("/api/v1/auth/**")//match les requêtes avec le préfixe "/api/v1/auth/"
-	            		.filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))// Applique le filtre d'en-tête personnalisé à la requête
-	            		.uri("lb://AUTH-SERVICE"))
-	            .build();
-	}
-	
-	
-	@Bean
-	DiscoveryClientRouteDefinitionLocator dynamicRoutes(ReactiveDiscoveryClient rdc, 
-			DiscoveryLocatorProperties dlp, 
-			JwtAuthenticationFilter customHeaderFilter) {
-	    DiscoveryClientRouteDefinitionLocator locator = new DiscoveryClientRouteDefinitionLocator(rdc, dlp);
-		return locator;
-	}
 
-	
-	public static void main(String[] args) {
-		SpringApplication.run(CloudGatewayApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(CloudGatewayApplication.class, args);
+    }
 
+    // ===== ROUTES DYNAMIQUES =====
+    @Bean
+    public RouteLocator gatewayRoutes(RouteLocatorBuilder builder, JwtAuthenticationFilter customHeaderFilter) {
+        return builder.routes()
+                .route(r -> r.path("/api/v1/auth/**")
+                        .filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AUTH-SERVICE"))
+                .route(r -> r.path("/api/v1/spots/**")
+                        .filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AUTH-SERVICE"))
+                .route(r -> r.path("/api/v1/hikingspot/**")
+                        .filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AUTH-SERVICE"))
+                .route("friend-requests", r -> r.path("/api/v1/friend-requests/**")
+                        .uri("lb://AUTH-SERVICE"))
+                .route("group-source", r -> r.path("/api/v1/groupSource/**")
+                    .filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))
+                    .uri("lb://AUTH-SERVICE"))
+                .route(r -> r.path("/api/v1/user-relations/**")
+                        .filters(f -> f.filter(customHeaderFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AUTH-SERVICE"))
+				.route(r -> r.path("/ws/**")
+                    .uri("lb://AUTH-SERVICE"))
+                .build();
+    }
+
+    @Bean
+    public DiscoveryClientRouteDefinitionLocator dynamicRoutes(ReactiveDiscoveryClient rdc,
+                                                              DiscoveryLocatorProperties dlp) {
+        return new DiscoveryClientRouteDefinitionLocator(rdc, dlp);
+    }
+
+    // ===== CORS GLOBAL POUR GATEWAY (CORRECT) =====/* 
+	@Bean
+	public CorsWebFilter corsWebFilter() {
+		CorsConfiguration corsConfig = new CorsConfiguration();
+		corsConfig.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
+		corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+		corsConfig.setAllowedHeaders(Arrays.asList("*"));
+		corsConfig.setAllowCredentials(true);
+		corsConfig.setMaxAge(3600L);
+		
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		
+		// ✅ CORS pour toutes les routes SAUF /ws
+		CorsConfiguration noCors = new CorsConfiguration();
+		noCors.setAllowedOrigins(Arrays.asList("*"));
+		
+		source.registerCorsConfiguration("/ws/**", noCors);  // Pas de CORS pour WebSocket
+		source.registerCorsConfiguration("/**", corsConfig);  // CORS pour le reste
+		
+		return new CorsWebFilter(source);
+	}
 }

@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(
+    name = "cloudinary.enabled",
+    havingValue = "true"
+)
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;

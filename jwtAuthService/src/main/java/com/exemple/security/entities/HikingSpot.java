@@ -1,6 +1,7 @@
 package com.exemple.security.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,7 +30,6 @@ public class HikingSpot implements Serializable {
     private double duration; // Durée totale (en minutes)
     private String travelMode; // WALKING, DRIVING, etc.
 
-    // 🗺️ Coordonnées du point de départ et d’arrivée
     private double startLatitude;
     private double startLongitude;
     private double endLatitude;
@@ -38,7 +38,6 @@ public class HikingSpot implements Serializable {
     private int difficultyLevel; // 1-5
     private String imagePath; // Image principale
 
-    // ✅ Plusieurs URLs d’images
     @ElementCollection
     @CollectionTable(
         name = "hiking_spot_images",
@@ -51,8 +50,12 @@ public class HikingSpot implements Serializable {
     @OneToMany(mappedBy = "hikingSpot", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HikingWaypoint> waypoints;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
     @JsonBackReference
     private UserApp creator;
+
+    @OneToMany(mappedBy = "hikingSpot", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private List<Comment> comments = new ArrayList<>();
 }

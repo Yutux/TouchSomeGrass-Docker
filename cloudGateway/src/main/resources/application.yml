@@ -5,6 +5,7 @@ spring:
   application:
     name: gateway-service
   jwt:
+    securityKey: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     privateKey: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   cloud:
     discovery:
@@ -14,23 +15,19 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
-      globalcors:
-        add-to-simple-url-handler-mapping: true
-        corsConfigurations:
-          "[/**]":
-            allowedOrigins:
-              - "http://localhost:3000"
-            allowCredentials: true
-            allowedHeaders:
-              - "*"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+        security.web.FilterChainProxy: DEBUG
+        security.web.access.intercept.FilterSecurityInterceptor: DEBUG
+    com:
+      exemple:
+        security: DEBUG

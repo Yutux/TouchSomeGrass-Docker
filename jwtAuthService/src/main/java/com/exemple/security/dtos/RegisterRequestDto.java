@@ -19,6 +19,7 @@ public class RegisterRequestDto {
   private String lastname;
   private String email;
   private String password;
+  @Builder.Default
   private List<Role> roles = new ArrayList<>();
   
   public List<Role> setRoles(Role role) {

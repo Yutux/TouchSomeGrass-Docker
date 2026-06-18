@@ -1,11 +1,13 @@
 package com.exemple.security.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,12 +16,14 @@ import com.exemple.security.dtos.RegisterRequestDto;
 import com.exemple.security.services.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
 	private final AuthenticationService service;
+	private final AuthenticationManager authenticationManager;
 	
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody RegisterRequestDto request) {
@@ -28,6 +32,9 @@ public class AuthenticationController {
 
 	@PostMapping("/authenticate")
 	public ResponseEntity<?> authenticate(@RequestBody AuthenticationRequestDto request) {
+		System.out.println("🚀 CONTROLLER AUTH HIT");
+		System.out.println("🔥 AUTH MANAGER CLASS = " + authenticationManager.getClass());
+
 		return service.authenticate(request);
 	}
 
@@ -56,9 +63,8 @@ public class AuthenticationController {
 		return service.delete(id);
 	}
 	
-	
 	@GetMapping("/user")
-	public ResponseEntity<?> user(@RequestParam String token){
-		return service.isLoggin(token);
-	}
+    public ResponseEntity<?> user(@RequestHeader("Authorization") String header){
+        return service.isLoggin(header);
+    }
 }

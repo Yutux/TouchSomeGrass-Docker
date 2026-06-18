@@ -21,6 +21,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -51,13 +53,66 @@ public class UserApp implements Serializable, UserDetails {
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private List<Role> roles = new ArrayList<>();
 	
-	@OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	
+	@OneToMany(mappedBy = "creator", fetch = FetchType.LAZY)
 	@JsonManagedReference
 	private List<Spot> spots = new ArrayList<>();
 
-	@OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	
+	@OneToMany(mappedBy = "creator", fetch = FetchType.LAZY)
 	@JsonManagedReference
 	private List<HikingSpot> hikingSpots = new ArrayList<>();
+
+	// Spots favoris
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(
+		name = "user_favorite_spots",
+		joinColumns = @JoinColumn(name = "user_id"),
+		inverseJoinColumns = @JoinColumn(name = "spot_id")
+	)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	private List<Spot> favoriteSpots = new ArrayList<>();
+
+	// HikingSpots favoris
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(
+		name = "user_favorite_hiking_spots",
+		joinColumns = @JoinColumn(name = "user_id"),
+		inverseJoinColumns = @JoinColumn(name = "hiking_spot_id")
+	)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	private List<HikingSpot> favoriteHikingSpots = new ArrayList<>();
+
+	// Liste des amis (relation auto-référentielle)
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(
+		name = "user_friends",
+		joinColumns = @JoinColumn(name = "user_id"),
+		inverseJoinColumns = @JoinColumn(name = "friend_id")
+	)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "friends", "favoriteSpots", "favoriteHikingSpots"})
+	private List<UserApp> friends = new ArrayList<>();
+	
+	// Commentaires de l'utilisateur
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	private List<Comment> comments = new ArrayList<>();
+	
+	// Appartenances aux groupes
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	private List<GroupMembership> groupMemberships = new ArrayList<>();
+	
+	// Conversations (privées) auxquelles l'utilisateur participe
+	@ManyToMany(mappedBy = "participants", fetch = FetchType.LAZY)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "participants", "messages"})
+	private List<Conversation> conversations = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupInvitation> receivedInvitations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "invitedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupInvitation> sentInvitations = new ArrayList<>();
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -69,42 +124,26 @@ public class UserApp implements Serializable, UserDetails {
 		return authorities;
 	}
 	
-/*
-    @ManyToOne(fetch = FetchType.EAGER, cascade=CascadeType.ALL)
-	private Role role;
-
-
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of(new SimpleGrantedAuthority(String.valueOf(role.getRoleName())));
-	}*/
-
-	@Override
-	public String getPassword() {
-		return password;
-	}
-
 	@Override
 	public String getUsername() {
 		return email;
 	}
 	
-
 	@Override
 	public boolean isAccountNonExpired() {
 		return true;
 	}
-
+	
 	@Override
 	public boolean isAccountNonLocked() {
 		return true;
 	}
-
+	
 	@Override
 	public boolean isCredentialsNonExpired() {
 		return true;
 	}
-
+	
 	@Override
 	public boolean isEnabled() {
 		return true;

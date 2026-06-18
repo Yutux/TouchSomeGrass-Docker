@@ -32,8 +32,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - mysql-container          # corrigé ici
-      - eureka-server # corrigé ici
+      - mysql-container     
+      - eureka-server 
     networks:
       - app-network
 

@@ -5,9 +5,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
-import com.exemple.security.entities.Role;
-import com.exemple.security.enums.RoleName;
+//import com.exemple.security.entities.Role;
+//import com.exemple.security.enums.RoleName;
 import com.exemple.security.repositories.RoleRepository;
 import com.exemple.security.services.AccountService;
 
@@ -20,15 +21,21 @@ public class SecurityApplication {
 	}
 	
 	@Bean
+	@Profile("!test")
 	CommandLineRunner start(AccountService accountService, RoleRepository roleRepository) {
 		return args -> {
+			System.out.println("========================================");
+			System.out.println("✅ Application démarrée avec succès");
+			System.out.println("========================================");
 			
-			if (roleRepository.findAll().isEmpty()) {
-				accountService.createRoleIfNotExists();		
-			}else {
-				System.out.println("is fill");
-				
-			}
+			accountService.createRoleIfNotExists();
+			
+			long roleCount = roleRepository.count();
+			System.out.println("📊 Nombre de rôles en base : " + roleCount);
+			
+			System.out.println("========================================");
+			System.out.println("✅ Initialisation terminée");
+			System.out.println("========================================");
 		};
 	}
 }
