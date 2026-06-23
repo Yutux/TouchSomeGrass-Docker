@@ -21,6 +21,7 @@ spring:
           allowedOrigins:
             - "http://localhost:3000"
             - "https://front-touchsome-grass-lrfa1a4d4-yutuxs-projects.vercel.app"
+            - "https://front-touchsome-grass.vercel.app"
             - "https://*.vercel.app"
           allowCredentials: true
           allowedHeaders:
