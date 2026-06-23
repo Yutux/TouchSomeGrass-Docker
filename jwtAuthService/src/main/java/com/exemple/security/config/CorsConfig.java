@@ -16,7 +16,7 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // ✅ Autoriser localhost:3000
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://front-touchsome-grass-lrfa1a4d4-yutuxs-projects.vercel.app", "https://front-touchsome-grass.vercel.app/", "https://touchsomegrass.fr"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://front-touchsome-grass-lrfa1a4d4-yutuxs-projects.vercel.app", "https://front-touchsome-grass.vercel.app/", "https://touchsomegrass.fr", "https://front-touchsome-grass.vercel.app/*"));
         
         // ✅ Autoriser tous les headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
