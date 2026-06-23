@@ -59,23 +59,22 @@ public class CloudGatewayApplication {
 
     // ===== CORS GLOBAL POUR GATEWAY (CORRECT) =====/* 
 	@Bean
-	public CorsWebFilter corsWebFilter() {
-		CorsConfiguration corsConfig = new CorsConfiguration();
-		corsConfig.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
-		corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-		corsConfig.setAllowedHeaders(Arrays.asList("*"));
-		corsConfig.setAllowCredentials(true);
-		corsConfig.setMaxAge(3600L);
-		
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		
-		// ✅ CORS pour toutes les routes SAUF /ws
-		CorsConfiguration noCors = new CorsConfiguration();
-		noCors.setAllowedOrigins(Arrays.asList("*"));
-		
-		source.registerCorsConfiguration("/ws/**", noCors);  // Pas de CORS pour WebSocket
-		source.registerCorsConfiguration("/**", corsConfig);  // CORS pour le reste
-		
-		return new CorsWebFilter(source);
-	}
+        public CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:3000",
+                "https://front-touchsome-grass.vercel.app",
+                "https://front-touchsome-grass-lrfa1a4d4-yutuxs-projects.vercel.app",
+                "https://touchsomegrass.fr"
+        ));
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowCredentials(true);
+        corsConfig.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
+        }
 }
